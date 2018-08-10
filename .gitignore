@@ -8,3 +8,4 @@ musing.egg-info
 usefule_script
 TODO
 dist
+*.pyc

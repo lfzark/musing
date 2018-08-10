@@ -61,3 +61,5 @@ If you want to play the midi file, you should install a midi player first.
         - ` yum install epel*  timidity++`
 
     - Debian/Ubuntu `apt install timidity++`
+
+e.g.  set the player path `muse.play(player_path="/bin/timidi")`
