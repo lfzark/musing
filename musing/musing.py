@@ -168,17 +168,18 @@ class Musing(object):
         write notes to midi file.√
         '''
         file_path = 'tmp/' + filename
+        os.mkdir(file_path)
         self.midi_file_path = file_path
         self.pm.write(file_path)
 
-    def play(self):
+    def play(self,player_path='timidity'):
         '''
         play with timidity√
         '''
 
         if  not hasattr(self,'midi_file_path'):
             self.write_to_midi()
-        os.system('timidity %s' % (self.midi_file_path))
+        os.system('%s %s' % (player_path, self.midi_file_path))
 
     @staticmethod
     def chord_to_notes(note='D5', c_type='dim'):
