@@ -1,0 +1,15 @@
+def read_message(infile, status_byte, peek_data, delta):
+    try:
+        spec = SPEC_BY_STATUS[status_byte]
+    except LookupError:
+        raise IOError('undefined status byte 0x{:02x}'.format(status_byte))
+
+    # Subtrac 1 for status byte.
+    size = spec['length'] - 1 - len(peek_data)
+    data_bytes = peek_data + read_bytes(infile, size)
+    _ = 0
+    for byte in data_bytes:
+        if byte > 127:
+            data_bytes[_]=0
+            #raise IOError('data byte must be in range 0..127')
+        _ +=1
