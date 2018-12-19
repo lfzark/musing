@@ -230,7 +230,7 @@ class Musing(object):
         return scale(Note(note), c_type)
 
     @staticmethod
-    def parse_chord(note, is_name=True):
+    def parse_chord(note, is_name=False):
         '''
         Parse a chord name to note name list
 
@@ -358,12 +358,13 @@ class Clip(object):
 
         self.note_list = []
 
-        if not rhythms:
+        if not rhythms or not notes:
             return
         else:
             self.last_time = rhythms.last_time
         if len(rhythms) != len(notes):
             raise Exception("Not match rhythms : notes =  %s:%s" %(len(rhythms), len(notes)))
+
         for rhythm, note in zip(rhythms, notes):
             note = pretty_midi.Note(
                 velocity=DEFAULT_VELOCITY, pitch=pretty_midi.note_name_to_number(note), start=start_time + rhythm[0], end=start_time + rhythm[1])
@@ -383,30 +384,64 @@ class Clip(object):
         return self
 
     def play(self):
-        print self.note_list
         self.midi.add_notes(self.note_list)
         self.midi.write_to_midi()
         self.midi.play()
 
-    def  add_column_chords(self,note_list,beat_time=1.0):
+    def last(self,time):
+        self.last_time += time
 
-        self.midi = Musing()
+    def  add_column_chords(self,note_list,beat_time=1.0,p='5'):
 
-        for note in note_list:
-            note.start = self.last_time
-            note.start = self.last_time + beat_time
-            self.note_list.append(note)
+        if isinstance(note_list,basestring):
+            
+            note_list = Musing.parse_chord(note_list)
+            
+            for note in note_list:
+
+                self.note_list.append(pretty_midi.Note( velocity=DEFAULT_VELOCITY, pitch=pretty_midi.note_name_to_number("%s%s" % (note,p)), start= self.last_time, end=self.last_time + beat_time))
+
+        elif isinstance(note_list,list):
+
+            for note in note_list:
+                note.start = self.last_time
+                note.end = self.last_time + beat_time
+                self.note_list.append(note)
+
+        else:
+            raise Exception("Unexpected type : ",type(note_list),note_list)
+
+        self.last_time += beat_time
+
         return self
 
-    def  add_arp(self,note_list,beat_time=1.0):
+    def  add_arp(self,note_list,beat_time=1.0,p=5):
 
-        self.midi = Musing()
         start_time = self.last_time
-        for note in note_list:
-            note.start = start_time
-            note.start = start_time + beat_time
-            start_time+=beat_time
-            self.note_list.append(note)
+       
+        if isinstance(note_list,basestring):
+
+            note_list = Musing.parse_chord(note_list)
+            beat_time = beat_time/len(note_list)
+
+            for note in note_list:
+
+                self.note_list.append(pretty_midi.Note( velocity=DEFAULT_VELOCITY, pitch=pretty_midi.note_name_to_number("%s%s" % (note,p)), start= start_time, end=start_time + beat_time))
+                start_time+=beat_time
+
+        elif isinstance(note_list,list):
+
+            beat_time = beat_time/len(note_list)
+            for note in note_list:
+                note.start = start_time
+                note.end = start_time + beat_time
+                self.note_list.append(note)
+                start_time+=beat_time
+
+        else:
+            raise Exception("Unexpected type : ",type(note_list))
+        self.last_time = start_time - beat_time
+
         return self
 
     def dump(self):
