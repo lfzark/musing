@@ -54,12 +54,18 @@ muse.play()
 
 If you want to play the midi file, you should install a midi player first.
 
-- Linux :
-    - CentOS  
-        -  `sudo rpm --import http://li.nux.ro/download/nux/RPM-GPG-KEY-nux.ro`
-        -  `sudo rpm -Uvh http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-5.el7.nux.noarch.rpm`
-        - ` yum install epel*  timidity++`
+VLC :
 
-    - Debian/Ubuntu `apt install timidity++`
+- Debian/Ubuntu `apt install vlc  vlc-plugin-fluidsynth`
 
-e.g.  set the player path `muse.play(player_path="/bin/timidi")`
+
+Timidity:
+
+- CentOS  
+    -  `sudo rpm --import http://li.nux.ro/download/nux/RPM-GPG-KEY-nux.ro`
+    -  `sudo rpm -Uvh http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-5.el7.nux.noarch.rpm`
+    - ` yum install epel*  timidity++`
+
+- Debian/Ubuntu `apt install timidity++`
+
+e.g. custorm player : use  set the player path `muse.play(player_path="/bin/timidity")`

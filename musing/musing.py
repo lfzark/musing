@@ -26,18 +26,18 @@ class Musing(object):
     '''
     BPM = 105
 
-    def __init__(self, instrument_name='Bright Acoustic Piano'):
+    def __init__(self, midifile=None,instrument_name='Bright Acoustic Piano'):
         '''
         Init Musing Class
         '''
 
-        self.pm = pretty_midi.PrettyMIDI()
+        if midifile:
+            self.pm = pretty_midi.PrettyMIDI(midifile)
+            return 
 
-        tmp_instrument = pretty_midi.instrument_name_to_program(
-            instrument_name)
-        melody = pretty_midi.Instrument(program=tmp_instrument)
+        self.pm = pretty_midi.PrettyMIDI()
+        melody = pretty_midi.Instrument(program=pretty_midi.instrument_name_to_program(instrument_name))
         melody.current_time = 0.0
-        self.pm.instruments.append(melody)
         self.pm.instruments.append(melody)
 
     def reset(self):
@@ -57,6 +57,25 @@ class Musing(object):
         Get instruments from midi √
         '''
         return self.pm.instruments
+
+    def add_track(self, track, is_pattern=True,instrument_name="Bright Acoustic Piano"):
+        '''
+        add track to raw melody
+        '''
+
+        if isinstance(track,pretty_midi.Instrument):
+            self.pm.instruments.append(track)
+
+        elif isinstance(track,Clip):
+
+            melody = pretty_midi.Instrument(program=pretty_midi.instrument_name_to_program(instrument_name))
+            melody.current_time = 0.0
+            melody.notes = track.note_list
+            self.pm.instruments.append(melody)
+
+        else:
+            raise Exception("Excepted track type is Instrument",type(track))
+
 
     def add_rhythm(self, note, is_pattern=True):
         '''
@@ -97,14 +116,13 @@ class Musing(object):
             self.pm.instruments[instrument_num].current_time = curr_time
 
     @staticmethod
-    def get_clip(self, note_list, rhythm):
+    def get_track(self, note_list, rhythm):
         pass
 
     def note_with_rhythm(self, note_list, rhythm, instrument_num=0):
         '''
         note name add
         '''
-
         curr_time = 0.0
         chord_duration = 1
         duration_list = [0.2, 0.2, 0.2, 0.35, 0.15, 0.25]
@@ -165,21 +183,24 @@ class Musing(object):
 
     def write_to_midi(self, filename='%s_%s.%s' % (get_date_time(), make_hash(), 'midi')):
         '''
-        write notes to midi file.√
+        write notes to midi file.
         '''
-        file_path = 'tmp/' + filename
-        os.mkdir(file_path)
-        self.midi_file_path = file_path
-        self.pm.write(file_path)
 
-    def play(self,player_path='timidity'):
+        file_path = os.sep+'tmp' + os.sep+'musing_midi'
+        if not os.path.exists(file_path):
+            os.mkdir(file_path)
+        self.midi_file_path = file_path+os.sep + filename
+        print ("write to : %s"  % (self.midi_file_path))
+        self.pm.write(self.midi_file_path)
+
+    def play(self,player_path='cvlc'):
         '''
-        play with timidity√
+        play with cvlc(wildmidi or timidity etc).
         '''
 
         if  not hasattr(self,'midi_file_path'):
             self.write_to_midi()
-        os.system('%s %s' % (player_path, self.midi_file_path))
+        os.system('%s %s  --play-and-exit' % (player_path, self.midi_file_path))
 
     @staticmethod
     def chord_to_notes(note='D5', c_type='dim'):
@@ -329,8 +350,9 @@ class Clip(object):
     last_time = 0.0
 
     def __init__(self, rhythms=False, notes=False, velocity_list=[], start_time=.0):
+
         self.midi = Musing()
-        
+
         if not isinstance(rhythms, MusingRhythm):
             print 'Unexcept Type %s' % (type(rhythms))
 
@@ -340,7 +362,8 @@ class Clip(object):
             return
         else:
             self.last_time = rhythms.last_time
-
+        if len(rhythms) != len(notes):
+            raise Exception("Not match rhythms : notes =  %s:%s" %(len(rhythms), len(notes)))
         for rhythm, note in zip(rhythms, notes):
             note = pretty_midi.Note(
                 velocity=DEFAULT_VELOCITY, pitch=pretty_midi.note_name_to_number(note), start=start_time + rhythm[0], end=start_time + rhythm[1])
@@ -366,10 +389,23 @@ class Clip(object):
         self.midi.play()
 
     def  add_column_chords(self,note_list,beat_time=1.0):
+
         self.midi = Musing()
+
         for note in note_list:
             note.start = self.last_time
             note.start = self.last_time + beat_time
+            self.note_list.append(note)
+        return self
+
+    def  add_arp(self,note_list,beat_time=1.0):
+
+        self.midi = Musing()
+        start_time = self.last_time
+        for note in note_list:
+            note.start = start_time
+            note.start = start_time + beat_time
+            start_time+=beat_time
             self.note_list.append(note)
         return self
 
@@ -397,6 +433,8 @@ class MusingRhythm(object):
 
     def __iter__(self):
         return self.time_list.__iter__()
+    def __len__(self):
+        return len(self.time_list)
 
     def parse_rhythm(self, rhythm, unit_time=.5):
         '''

@@ -14,7 +14,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='musing',  # Required
-    version='1.0.1',  # Required
+    version='1.0.2',  # Required
     description=' A Music theme lib for human',  # Required
     long_description=long_description,  # Optional
     # This should be a valid link to your project's main homepage.
