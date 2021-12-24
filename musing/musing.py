@@ -404,14 +404,14 @@ class Clip(object):
     def last(self,time):
         self.last_time += time
 
-    def  add_column_chords(self,note_list,beat_time=1.0,p='5'):
+    def  add_column_chords(self,note_list,beat_time=1.0,p='5',velocity=SUB_STRONG,repeat=2):
 
         if isinstance(note_list,basestring):
             
             note_list = Musing.parse_chord(note_list)
-            print(note_list)
-            for note in note_list:
-                self.note_list.append(pretty_midi.Note( velocity=SUB_STRONG, pitch=pretty_midi.note_name_to_number("%s%s" % (note,p)), start= self.last_time, end=self.last_time + beat_time))
+            for repeat_div in range(0,repeat):
+                for note in note_list:
+                    self.note_list.append(pretty_midi.Note( velocity=velocity-3*repeat_div, pitch=pretty_midi.note_name_to_number("%s%s" % (note,p)), start= self.last_time+beat_time/float(repeat)*repeat_div, end=self.last_time + beat_time/float(repeat)*repeat_div))
 
         elif isinstance(note_list,list):
 
