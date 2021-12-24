@@ -17,8 +17,18 @@ CHORD_TYPE = ['M', 'm', 'dim', 'aug', 'open5',
               'dim7', 'maj7', 'aug7', 'sus2', 'sus4']
 MINUTE = 60.00000
 DEFAULT_MIDI_FILE = 'midi_data/40126.mid'
+STRONG = 36
+SUB_STRONG = 27
+WEAK = 18
 DEFAULT_VELOCITY = 36
-
+VELOCITY_DICT = {
+    1:[36],
+    2:[36,18],
+    3:[36,18,18],
+    4:[36,18,27,18],
+    5:[36,18,27,18,18],
+    6:[36,18,18,27,18,18],
+}
 
 class Musing(object):
     '''
@@ -349,7 +359,10 @@ class Clip(object):
 
     last_time = 0.0
 
-    def __init__(self, rhythms=False, notes=False, velocity_list=[], start_time=.0):
+    def init_last_time(self,start = 0.0):
+        self.last_time  = start
+
+    def __init__(self, rhythms=False, notes=False, velocity_list=[], start_time=.0, default_velocity=True,offset=0):
 
         self.midi = Musing()
 
@@ -367,7 +380,7 @@ class Clip(object):
 
         for rhythm, note in zip(rhythms, notes):
             note = pretty_midi.Note(
-                velocity=DEFAULT_VELOCITY, pitch=pretty_midi.note_name_to_number(note), start=start_time + rhythm[0], end=start_time + rhythm[1])
+                velocity=rhythm[2] if default_velocity else DEFAULT_VELOCITY, pitch=pretty_midi.note_name_to_number(note)-offset, start=start_time + rhythm[0], end=start_time + rhythm[1])
             self.note_list.append(note)
 
     def add_notes(self, notes=False, start_time=.0):
@@ -396,10 +409,9 @@ class Clip(object):
         if isinstance(note_list,basestring):
             
             note_list = Musing.parse_chord(note_list)
-            
+            print(note_list)
             for note in note_list:
-
-                self.note_list.append(pretty_midi.Note( velocity=DEFAULT_VELOCITY, pitch=pretty_midi.note_name_to_number("%s%s" % (note,p)), start= self.last_time, end=self.last_time + beat_time))
+                self.note_list.append(pretty_midi.Note( velocity=SUB_STRONG, pitch=pretty_midi.note_name_to_number("%s%s" % (note,p)), start= self.last_time, end=self.last_time + beat_time))
 
         elif isinstance(note_list,list):
 
@@ -468,6 +480,7 @@ class MusingRhythm(object):
 
     def __iter__(self):
         return self.time_list.__iter__()
+
     def __len__(self):
         return len(self.time_list)
 
@@ -498,13 +511,13 @@ class MusingRhythm(object):
         s_list = []
 
         unit = unit_time / float(t)
-
-        for r in r_list:
+        
+        for index,r in enumerate(r_list):
 
             if '-' in r:
                 start_time = now_time[0]
                 last_time = len(r) * unit
-                m_list.append((start_time, last_time + start_time))
+                m_list.append((start_time, last_time + start_time,VELOCITY_DICT.get(t,[27,27,27,27,27,27,27,27,27])[index]))
                 now_time[0] += last_time
             elif '.' in r:
                 start_time = now_time[0]
